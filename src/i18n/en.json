@@ -1,0 +1,136 @@
+{
+  "app": {
+    "name": "Choco Ops",
+    "brand": "Chocolate Admin"
+  },
+  "common": {
+    "actions": "Actions",
+    "add": "Add",
+    "address": "Address",
+    "all": "All",
+    "cancel": "Cancel",
+    "category": "Category",
+    "closeModal": "Close modal",
+    "closeNavigation": "Close navigation",
+    "closeNavigationOverlay": "Close navigation overlay",
+    "customer": "Customer",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "description": "Description",
+    "details": "Details",
+    "edit": "Edit",
+    "email": "Email",
+    "id": "ID",
+    "images": "Images",
+    "live": "Live",
+    "loading": "Loading...",
+    "name": "Name",
+    "noRecords": "No records found.",
+    "openNavigation": "Open navigation",
+    "password": "Password",
+    "phone": "Phone",
+    "price": "Price",
+    "save": "Save",
+    "saving": "Saving...",
+    "search": "Search",
+    "status": "Status",
+    "total": "Total",
+    "type": "Type",
+    "unassigned": "Unassigned",
+    "view": "View",
+    "weight": "Weight"
+  },
+  "language": {
+    "english": "English",
+    "arabic": "العربية",
+    "switchToEnglish": "Switch to English",
+    "switchToArabic": "Switch to Arabic"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "categories": "Categories",
+    "products": "Products",
+    "orders": "Orders",
+    "adminSession": "Admin session",
+    "workspace": "Protected Supabase workspace",
+    "logout": "Logout"
+  },
+  "login": {
+    "eyebrow": "Admin only",
+    "title": "Choco Ops Login",
+    "subtitle": "Sign in with a Supabase admin account to manage the chocolate shop backend.",
+    "signIn": "Sign in",
+    "signingIn": "Signing in..."
+  },
+  "dashboard": {
+    "eyebrow": "Backend control",
+    "title": "Dashboard",
+    "subtitle": "Manage occasions, chocolate products, image assets, and customer orders from one protected admin workspace.",
+    "cards": {
+      "categories": "Categories",
+      "products": "Products",
+      "orders": "Orders",
+      "delivered": "Delivered"
+    },
+    "snapshotTitle": "Operations Snapshot",
+    "snapshotText": "Use Orders to review customer details and move orders through fulfillment."
+  },
+  "categories": {
+    "eyebrow": "Occasions",
+    "title": "Categories",
+    "subtitle": "Create and maintain occasions such as Wedding, Birthday, New Baby, and Events.",
+    "add": "Add Category",
+    "edit": "Edit Category",
+    "name": "Category name",
+    "occasion": "Occasion",
+    "loading": "Loading categories...",
+    "empty": "No categories yet. Add the first occasion.",
+    "save": "Save Category",
+    "deleteTitle": "Delete category",
+    "deleteMessage": "Delete \"{{name}}\"? Products linked to this occasion may need to be reassigned first.",
+    "placeholder": "Wedding"
+  },
+  "products": {
+    "eyebrow": "Catalog backend",
+    "title": "Products",
+    "subtitle": "Manage chocolate boxes, hospitality items, pricing, categories, and product imagery.",
+    "add": "Add Product",
+    "edit": "Edit Product",
+    "searchPlaceholder": "Search products...",
+    "allCategories": "All categories",
+    "allTypes": "All types",
+    "loading": "Loading products...",
+    "empty": "No products match the current filters.",
+    "noWeight": "No weight",
+    "noCategory": "No category",
+    "save": "Save Product",
+    "deleteTitle": "Delete product",
+    "deleteMessage": "Delete \"{{name}}\" from the product catalog?",
+    "invalidImage": "{{name}} is not a supported image file.",
+    "publicUrlError": "Could not create a public URL for {{name}}.",
+    "types": {
+      "Chocolate Box": "Chocolate Box",
+      "Hospitality": "Hospitality"
+    }
+  },
+  "orders": {
+    "eyebrow": "Fulfillment",
+    "title": "Orders",
+    "subtitle": "Review customer orders, inspect ordered products, and update fulfillment status.",
+    "searchPlaceholder": "Search by customer, phone, or address...",
+    "allStatuses": "All statuses",
+    "loading": "Loading orders...",
+    "empty": "No orders match the current filters.",
+    "detailsTitle": "Order Details",
+    "orderedProducts": "Ordered Products",
+    "noItems": "No order items found for this order.",
+    "quantity": "Qty",
+    "fallbackProduct": "Product {{id}}",
+    "totalPrice": "Total price",
+    "statuses": {
+      "new": "New",
+      "processing": "Processing",
+      "delivered": "Delivered"
+    }
+  }
+}
