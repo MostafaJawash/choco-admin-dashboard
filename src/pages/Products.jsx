@@ -1,4 +1,4 @@
-import { Edit3, FolderTree, ImagePlus, Layers3, Plus, Search, Trash2, X } from 'lucide-react'
+import { Edit3, ImagePlus, Plus, Search, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FormField from '../components/FormField'
@@ -114,20 +114,6 @@ export default function Products() {
 
     return `${formatted} ل.س`
   }
-
-  const categorySummaries = useMemo(() => {
-    return categories.map((category) => ({
-      ...category,
-      count: filteredProducts.filter((product) => product.category_id === category.id).length,
-    }))
-  }, [categories, filteredProducts])
-
-  const typeSummaries = useMemo(() => {
-    return productTypes.map((type) => ({
-      ...type,
-      count: filteredProducts.filter((product) => product.type_id === type.id).length,
-    }))
-  }, [filteredProducts, productTypes])
 
   const groupedProducts = useMemo(() => {
     const categoryMap = new Map()
@@ -331,63 +317,6 @@ export default function Products() {
         </select>
       </section>
 
-      <section className="mb-5 grid gap-4 lg:grid-cols-2">
-        <div className="panel p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm font-bold text-stone-950">
-            <FolderTree size={18} className="text-amber-800" />
-            {t('products.categoryOverview')}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {categorySummaries.length === 0 ? (
-              <span className="text-sm text-stone-500">{t('categories.empty')}</span>
-            ) : (
-              categorySummaries.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
-                    categoryFilter === category.id
-                      ? 'border-stone-950 bg-stone-950 text-white'
-                      : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
-                  }`}
-                  onClick={() => setCategoryFilter((current) => (current === category.id ? '' : category.id))}
-                >
-                  {category.name}
-                  <span className="ms-2 text-xs opacity-70">{category.count}</span>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-        <div className="panel p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm font-bold text-stone-950">
-            <Layers3 size={18} className="text-amber-800" />
-            {t('products.typeOverview')}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {typeSummaries.length === 0 ? (
-              <span className="text-sm text-stone-500">{t('productTypes.empty')}</span>
-            ) : (
-              typeSummaries.map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
-                    typeFilter === type.id
-                      ? 'border-amber-900 bg-amber-900 text-white'
-                      : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
-                  }`}
-                  onClick={() => setTypeFilter((current) => (current === type.id ? '' : type.id))}
-                >
-                  {type.name}
-                  <span className="ms-2 text-xs opacity-70">{type.count}</span>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
-
       {loading ? (
         <div className="panel p-10 text-center text-stone-500">{t('products.loading')}</div>
       ) : filteredProducts.length === 0 ? (
@@ -436,7 +365,16 @@ export default function Products() {
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <h4 className="truncate font-bold text-stone-950">{product.name}</h4>
-                                  <p className="mt-1 text-sm text-stone-500">{getCategoryName(product)} · {getProductTypeName(product)}</p>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-700">
+                                      <span className="text-stone-500">{t('common.category')}:</span>
+                                      {getCategoryName(product)}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
+                                      <span className="text-amber-800/70">{t('common.type')}:</span>
+                                      {getProductTypeName(product)}
+                                    </span>
+                                  </div>
                                 </div>
                                 <p className="shrink-0 font-black text-amber-900">{formatPrice(product.price)}</p>
                               </div>
