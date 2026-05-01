@@ -1,7 +1,7 @@
 {
   "app": {
-    "name": "Choco Ops",
-    "brand": "Chocolate Admin"
+    "name": "Uncle Bondq",
+    "brand": "Admin Dashboard"
   },
   "common": {
     "actions": "Actions",
@@ -30,6 +30,7 @@
     "password": "Password",
     "phone": "Phone",
     "price": "Price",
+    "notifications": "Notifications",
     "save": "Save",
     "saving": "Saving...",
     "search": "Search",
@@ -51,6 +52,7 @@
     "categories": "Categories",
     "products": "Products",
     "orders": "Orders",
+    "productTypes": "Product Types",
     "adminSession": "Admin session",
     "workspace": "Protected Supabase workspace",
     "logout": "Logout"
@@ -90,6 +92,20 @@
     "deleteMessage": "Delete \"{{name}}\"? Products linked to this occasion may need to be reassigned first.",
     "placeholder": "Wedding"
   },
+  "productTypes": {
+    "eyebrow": "Catalog taxonomy",
+    "title": "Product Types",
+    "subtitle": "Create and maintain product types used by the product form.",
+    "add": "Add Type",
+    "edit": "Edit Type",
+    "name": "Type name",
+    "loading": "Loading product types...",
+    "empty": "No product types yet.",
+    "save": "Save Type",
+    "deleteTitle": "Delete product type",
+    "deleteMessage": "Delete \"{{name}}\"? Products linked to this type may need to be reassigned first.",
+    "placeholder": "Chocolate Box"
+  },
   "products": {
     "eyebrow": "Catalog backend",
     "title": "Products",
@@ -103,15 +119,14 @@
     "empty": "No products match the current filters.",
     "noWeight": "No weight",
     "noCategory": "No category",
+    "noType": "No type",
+    "typeRequired": "Choose a product type before saving.",
     "save": "Save Product",
     "deleteTitle": "Delete product",
     "deleteMessage": "Delete \"{{name}}\" from the product catalog?",
     "invalidImage": "{{name}} is not a supported image file.",
     "publicUrlError": "Could not create a public URL for {{name}}.",
-    "types": {
-      "Chocolate Box": "Chocolate Box",
-      "Hospitality": "Hospitality"
-    }
+    "typeLoadError": "Could not load product types."
   },
   "orders": {
     "eyebrow": "Fulfillment",
@@ -127,6 +142,7 @@
     "quantity": "Qty",
     "fallbackProduct": "Product {{id}}",
     "totalPrice": "Total price",
+    "createdAt": "Date",
     "statuses": {
       "new": "New",
       "processing": "Processing",

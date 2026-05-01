@@ -83,6 +83,14 @@ export default function Orders() {
     currency: 'USD',
   }).format(Number(value || 0))
 
+  const formatDate = (value) => {
+    if (!value) return '-'
+    return new Intl.DateTimeFormat(language === 'ar' ? 'ar' : 'en', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value))
+  }
+
   const columns = [
     {
       key: 'customer_name',
@@ -117,6 +125,11 @@ export default function Orders() {
       key: 'total',
       header: t('common.total'),
       render: (row) => <span className="font-bold text-stone-950">{formatCurrency(calculateTotal(row))}</span>,
+    },
+    {
+      key: 'created_at',
+      header: t('orders.createdAt'),
+      render: (row) => <span className="text-sm text-stone-600">{formatDate(row.created_at)}</span>,
     },
     {
       key: 'actions',
@@ -154,7 +167,49 @@ export default function Orders() {
       {loading ? (
         <div className="panel p-10 text-center text-stone-500">{t('orders.loading')}</div>
       ) : (
-        <Table columns={columns} data={filteredOrders} emptyText={t('orders.empty')} />
+        <>
+          <div className="hidden md:block">
+            <Table columns={columns} data={filteredOrders} emptyText={t('orders.empty')} />
+          </div>
+          <section className="grid gap-3 md:hidden">
+            {filteredOrders.length === 0 ? (
+              <div className="panel p-10 text-center text-stone-500">{t('orders.empty')}</div>
+            ) : (
+              filteredOrders.map((order) => (
+                <article key={order.id} className="panel p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate font-bold text-stone-950">{order.customer_name}</h2>
+                      <p className="mt-1 text-sm text-stone-500">{order.phone}</p>
+                    </div>
+                    <select
+                      className={`shrink-0 rounded-full border-0 px-3 py-1 text-xs font-bold capitalize outline-none ${statusStyles[order.status] || statusStyles.new}`}
+                      value={order.status || 'new'}
+                      onChange={(event) => updateStatus(order.id, event.target.value)}
+                      disabled={savingId === order.id}
+                    >
+                      {statuses.map((status) => <option key={status} value={status}>{t(`orders.statuses.${status}`)}</option>)}
+                    </select>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-lg bg-stone-50 p-3">
+                      <p className="text-xs font-bold text-stone-500">{t('common.total')}</p>
+                      <p className="mt-1 font-black text-stone-950">{formatCurrency(calculateTotal(order))}</p>
+                    </div>
+                    <div className="rounded-lg bg-stone-50 p-3">
+                      <p className="text-xs font-bold text-stone-500">{t('orders.createdAt')}</p>
+                      <p className="mt-1 font-semibold text-stone-700">{formatDate(order.created_at)}</p>
+                    </div>
+                  </div>
+                  <button type="button" className="btn-secondary mt-4 w-full" onClick={() => setSelectedOrder(order)}>
+                    <Eye size={15} />
+                    {t('common.view')}
+                  </button>
+                </article>
+              ))
+            )}
+          </section>
+        </>
       )}
 
       <Modal open={Boolean(selectedOrder)} title={t('orders.detailsTitle')} onClose={() => setSelectedOrder(null)} size="max-w-3xl">

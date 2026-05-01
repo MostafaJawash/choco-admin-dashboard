@@ -1,7 +1,7 @@
 {
   "app": {
-    "name": "تشوكو أوبس",
-    "brand": "إدارة الشوكولاتة"
+    "name": "Uncle Bondq",
+    "brand": "إدارة أنكل بندق"
   },
   "common": {
     "actions": "الإجراءات",
@@ -30,6 +30,7 @@
     "password": "كلمة المرور",
     "phone": "الهاتف",
     "price": "السعر",
+    "notifications": "الإشعارات",
     "save": "حفظ",
     "saving": "جار الحفظ...",
     "search": "بحث",
@@ -51,6 +52,7 @@
     "categories": "الفئات",
     "products": "المنتجات",
     "orders": "الطلبات",
+    "productTypes": "أنواع المنتجات",
     "adminSession": "جلسة المدير",
     "workspace": "مساحة عمل Supabase محمية",
     "logout": "تسجيل الخروج"
@@ -90,6 +92,20 @@
     "deleteMessage": "حذف \"{{name}}\"؟ قد تحتاج المنتجات المرتبطة بهذه المناسبة إلى إعادة تعيين.",
     "placeholder": "زفاف"
   },
+  "productTypes": {
+    "eyebrow": "تصنيف الكتالوج",
+    "title": "أنواع المنتجات",
+    "subtitle": "أنشئ وعدل أنواع المنتجات المستخدمة داخل نموذج المنتج.",
+    "add": "إضافة نوع",
+    "edit": "تعديل النوع",
+    "name": "اسم النوع",
+    "loading": "جار تحميل أنواع المنتجات...",
+    "empty": "لا توجد أنواع منتجات بعد.",
+    "save": "حفظ النوع",
+    "deleteTitle": "حذف نوع المنتج",
+    "deleteMessage": "حذف \"{{name}}\"؟ قد تحتاج المنتجات المرتبطة بهذا النوع إلى إعادة تعيين.",
+    "placeholder": "علبة شوكولاتة"
+  },
   "products": {
     "eyebrow": "إدارة الكتالوج",
     "title": "المنتجات",
@@ -103,15 +119,14 @@
     "empty": "لا توجد منتجات تطابق عوامل التصفية الحالية.",
     "noWeight": "لا يوجد وزن",
     "noCategory": "بدون فئة",
+    "noType": "بدون نوع",
+    "typeRequired": "اختر نوع المنتج قبل الحفظ.",
     "save": "حفظ المنتج",
     "deleteTitle": "حذف المنتج",
     "deleteMessage": "حذف \"{{name}}\" من كتالوج المنتجات؟",
     "invalidImage": "{{name}} ليس ملف صورة مدعوماً.",
     "publicUrlError": "تعذر إنشاء رابط عام للملف {{name}}.",
-    "types": {
-      "Chocolate Box": "علبة شوكولاتة",
-      "Hospitality": "ضيافة"
-    }
+    "typeLoadError": "تعذر تحميل أنواع المنتجات."
   },
   "orders": {
     "eyebrow": "تنفيذ الطلبات",
@@ -127,6 +142,7 @@
     "quantity": "الكمية",
     "fallbackProduct": "منتج {{id}}",
     "totalPrice": "السعر الإجمالي",
+    "createdAt": "التاريخ",
     "statuses": {
       "new": "جديد",
       "processing": "قيد المعالجة",

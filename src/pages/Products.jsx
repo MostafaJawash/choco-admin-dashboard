@@ -1,11 +1,11 @@
 import { Edit3, ImagePlus, Plus, Search, Trash2, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
+import FormField from '../components/FormField'
 import Modal from '../components/Modal'
 import { useI18n } from '../i18n/useI18n'
 import { supabase } from '../lib/supabaseClient'
 
-const productTypes = ['Chocolate Box', 'Hospitality']
 const PRODUCT_IMAGES_BUCKET = 'product-images'
 const IMAGE_MIME_TYPE = /^image\//
 const PRODUCT_IMAGES_PUBLIC_PATH = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`
@@ -15,7 +15,7 @@ const initialForm = {
   description: '',
   weight: '',
   category_id: '',
-  type: 'Chocolate Box',
+  type_id: '',
   images: [],
 }
 
@@ -53,6 +53,7 @@ export default function Products() {
   const { t } = useI18n()
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
+  const [productTypes, setProductTypes] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -65,22 +66,26 @@ export default function Products() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
 
-  const loadData = async () => {
-    const [productResult, categoryResult] = await Promise.all([
-      supabase.from('products').select('*, categories(name)').order('name', { ascending: true }),
+  const loadData = useCallback(async () => {
+    setError('')
+    const [productResult, categoryResult, productTypeResult] = await Promise.all([
+      supabase.from('products').select('*, categories(name), product_types(name)').order('name', { ascending: true }),
       supabase.from('categories').select('*').order('name', { ascending: true }),
+      supabase.from('product_types').select('id, name').order('name', { ascending: true }),
     ])
 
     if (productResult.error) setError(productResult.error.message)
     if (categoryResult.error) setError(categoryResult.error.message)
+    if (productTypeResult.error) setError(productTypeResult.error.message || t('products.typeLoadError'))
     setProducts(productResult.data || [])
     setCategories(categoryResult.data || [])
+    setProductTypes(productTypeResult.data || [])
     setLoading(false)
-  }
+  }, [t])
 
   useEffect(() => {
     Promise.resolve().then(loadData)
-  }, [])
+  }, [loadData])
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -89,14 +94,18 @@ export default function Products() {
         .toLowerCase()
         .includes(search.toLowerCase())
       const matchesCategory = categoryFilter ? product.category_id === categoryFilter : true
-      const matchesType = typeFilter ? product.type === typeFilter : true
+      const matchesType = typeFilter ? product.type_id === typeFilter : true
       return matchesSearch && matchesCategory && matchesType
     })
   }, [products, search, categoryFilter, typeFilter])
 
+  const getProductTypeName = (product) => {
+    return product.product_types?.name || productTypes.find((type) => type.id === product.type_id)?.name || product.type || t('products.noType')
+  }
+
   const openCreate = () => {
     setEditing(null)
-    setForm({ ...initialForm, category_id: categories[0]?.id || '' })
+    setForm({ ...initialForm, category_id: categories[0]?.id || '', type_id: productTypes[0]?.id || '' })
     setFiles([])
     setModalOpen(true)
   }
@@ -109,7 +118,7 @@ export default function Products() {
       description: product.description || '',
       weight: product.weight || '',
       category_id: product.category_id || '',
-      type: product.type || 'Chocolate Box',
+      type_id: product.type_id || '',
       images: normalizeProductImages(product.images),
     })
     setFiles([])
@@ -180,6 +189,10 @@ export default function Products() {
     setError('')
 
     try {
+      if (!form.type_id) {
+        throw new Error(t('products.typeRequired'))
+      }
+
       const newImages = await uploadImages()
       const payload = {
         name: form.name.trim(),
@@ -187,7 +200,7 @@ export default function Products() {
         description: form.description.trim(),
         weight: form.weight.trim(),
         category_id: form.category_id || null,
-        type: form.type,
+        type_id: form.type_id,
         images: [...form.images, ...newImages].map((image) => image.trim()).filter(Boolean),
       }
 
@@ -250,7 +263,7 @@ export default function Products() {
         </select>
         <select className="field" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
           <option value="">{t('products.allTypes')}</option>
-          {productTypes.map((type) => <option key={type} value={type}>{t(`products.types.${type}`)}</option>)}
+          {productTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
         </select>
       </section>
 
@@ -284,7 +297,7 @@ export default function Products() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="font-bold text-stone-950">{product.name}</h2>
-                      <p className="mt-1 text-sm text-stone-500">{product.categories?.name || t('common.unassigned')} · {t(`products.types.${product.type}`)}</p>
+                      <p className="mt-1 text-sm text-stone-500">{product.categories?.name || t('common.unassigned')} · {getProductTypeName(product)}</p>
                     </div>
                     <p className="font-black text-amber-900">${Number(product.price || 0).toFixed(2)}</p>
                   </div>
@@ -306,14 +319,34 @@ export default function Products() {
       <Modal open={modalOpen} title={editing ? t('products.edit') : t('products.add')} onClose={() => setModalOpen(false)} size="max-w-3xl">
         <form className="grid gap-4" onSubmit={saveProduct}>
           <div className="grid gap-4 md:grid-cols-2">
-            <label><span className="mb-1.5 block text-sm font-semibold text-stone-700">{t('common.name')}</span><input className="field" value={form.name} onChange={(event) => updateForm('name', event.target.value)} required /></label>
-            <label><span className="mb-1.5 block text-sm font-semibold text-stone-700">{t('common.price')}</span><input className="field" type="number" min="0" step="0.01" value={form.price} onChange={(event) => updateForm('price', event.target.value)} required /></label>
-            <label><span className="mb-1.5 block text-sm font-semibold text-stone-700">{t('common.weight')}</span><input className="field" value={form.weight} onChange={(event) => updateForm('weight', event.target.value)} placeholder="500g" /></label>
-            <label><span className="mb-1.5 block text-sm font-semibold text-stone-700">{t('common.type')}</span><select className="field" value={form.type} onChange={(event) => updateForm('type', event.target.value)}>{productTypes.map((type) => <option key={type} value={type}>{t(`products.types.${type}`)}</option>)}</select></label>
+            <FormField label={t('common.name')}>
+              <input className="field" value={form.name} onChange={(event) => updateForm('name', event.target.value)} required />
+            </FormField>
+            <FormField label={t('common.price')}>
+              <input className="field" type="number" min="0" step="0.01" value={form.price} onChange={(event) => updateForm('price', event.target.value)} required />
+            </FormField>
+            <FormField label={t('common.weight')}>
+              <input className="field" value={form.weight} onChange={(event) => updateForm('weight', event.target.value)} placeholder="500g" />
+            </FormField>
+            <FormField label={t('common.type')}>
+              <select className="field" value={form.type_id} onChange={(event) => updateForm('type_id', event.target.value)} required>
+                <option value="">{t('products.noType')}</option>
+                {productTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
+              </select>
+            </FormField>
           </div>
-          <label><span className="mb-1.5 block text-sm font-semibold text-stone-700">{t('common.category')}</span><select className="field" value={form.category_id} onChange={(event) => updateForm('category_id', event.target.value)}><option value="">{t('products.noCategory')}</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-          <label><span className="mb-1.5 block text-sm font-semibold text-stone-700">{t('common.description')}</span><textarea className="field min-h-28 resize-y" value={form.description} onChange={(event) => updateForm('description', event.target.value)} /></label>
-          <label><span className="mb-1.5 block text-sm font-semibold text-stone-700">{t('common.images')}</span><input className="field" type="file" accept="image/*" multiple onChange={(event) => setFiles([...event.target.files])} /></label>
+          <FormField label={t('common.category')}>
+            <select className="field" value={form.category_id} onChange={(event) => updateForm('category_id', event.target.value)}>
+              <option value="">{t('products.noCategory')}</option>
+              {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+            </select>
+          </FormField>
+          <FormField label={t('common.description')}>
+            <textarea className="field min-h-28 resize-y" value={form.description} onChange={(event) => updateForm('description', event.target.value)} />
+          </FormField>
+          <FormField label={t('common.images')}>
+            <input className="field" type="file" accept="image/*" multiple onChange={(event) => setFiles([...event.target.files])} />
+          </FormField>
           {form.images.length > 0 && (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {form.images.map((image) => (

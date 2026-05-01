@@ -6,6 +6,7 @@ import Categories from './pages/Categories'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Orders from './pages/Orders'
+import ProductTypes from './pages/ProductTypes'
 import Products from './pages/Products'
 
 function AdminLayout() {
@@ -15,7 +16,7 @@ function AdminLayout() {
     <ProtectedRoute>
       <div className="min-h-screen bg-stone-50 text-stone-950">
         <Sidebar />
-        <main className={`min-h-screen px-4 py-5 transition-all duration-300 md:px-8 lg:px-10 ${isRtl ? 'md:mr-72' : 'md:ml-72'}`}>
+        <main className={`min-h-screen px-4 pb-28 pt-5 transition-all duration-300 md:px-8 md:pb-5 lg:px-10 ${isRtl ? 'md:mr-72' : 'md:ml-72'}`}>
           <Outlet />
         </main>
       </div>
@@ -33,6 +34,7 @@ function App() {
         <Route path="/categories" element={<Categories />} />
         <Route path="/products" element={<Products />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/product-types" element={<ProductTypes />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

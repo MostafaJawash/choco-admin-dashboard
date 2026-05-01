@@ -20,7 +20,7 @@ const interpolate = (value, params = {}) => {
 const getInitialLanguage = () => {
   const storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY)
   if (storedLanguage === 'ar' || storedLanguage === 'en') return storedLanguage
-  return 'en'
+  return 'ar'
 }
 
 export function I18nProvider({ children }) {
