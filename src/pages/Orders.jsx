@@ -78,10 +78,13 @@ export default function Orders() {
     setSelectedOrder((current) => (current?.id === orderId ? { ...current, status } : current))
   }
 
-  const formatCurrency = (value) => new Intl.NumberFormat(language === 'ar' ? 'ar' : 'en', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(Number(value || 0))
+  const formatCurrency = (value) => {
+    const formatted = new Intl.NumberFormat(language === 'ar' ? 'ar-SY' : 'en-US', {
+      maximumFractionDigits: 0,
+    }).format(Number(value || 0))
+
+    return `${formatted} ل.س`
+  }
 
   const formatDate = (value) => {
     if (!value) return '-'
