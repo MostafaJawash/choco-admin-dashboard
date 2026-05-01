@@ -1,4 +1,4 @@
-import { Edit3, ImagePlus, Plus, Search, Trash2, X } from 'lucide-react'
+import { Edit3, FolderTree, ImagePlus, Layers3, Plus, Search, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FormField from '../components/FormField'
@@ -50,7 +50,7 @@ const normalizeProductImages = (images) => {
 }
 
 export default function Products() {
-  const { t } = useI18n()
+  const { language, t } = useI18n()
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [productTypes, setProductTypes] = useState([])
@@ -99,9 +99,73 @@ export default function Products() {
     })
   }, [products, search, categoryFilter, typeFilter])
 
-  const getProductTypeName = (product) => {
+  const getProductTypeName = useCallback((product) => {
     return product.product_types?.name || productTypes.find((type) => type.id === product.type_id)?.name || product.type || t('products.noType')
+  }, [productTypes, t])
+
+  const getCategoryName = useCallback((product) => {
+    return product.categories?.name || categories.find((category) => category.id === product.category_id)?.name || t('common.unassigned')
+  }, [categories, t])
+
+  const formatPrice = (value) => {
+    const formatted = new Intl.NumberFormat(language === 'ar' ? 'ar-SY' : 'en-US', {
+      maximumFractionDigits: 0,
+    }).format(Number(value || 0))
+
+    return `${formatted} ل.س`
   }
+
+  const categorySummaries = useMemo(() => {
+    return categories.map((category) => ({
+      ...category,
+      count: filteredProducts.filter((product) => product.category_id === category.id).length,
+    }))
+  }, [categories, filteredProducts])
+
+  const typeSummaries = useMemo(() => {
+    return productTypes.map((type) => ({
+      ...type,
+      count: filteredProducts.filter((product) => product.type_id === type.id).length,
+    }))
+  }, [filteredProducts, productTypes])
+
+  const groupedProducts = useMemo(() => {
+    const categoryMap = new Map()
+
+    filteredProducts.forEach((product) => {
+      const categoryKey = product.category_id || 'unassigned'
+      const typeKey = product.type_id || 'unassigned'
+      const categoryName = getCategoryName(product)
+      const typeName = getProductTypeName(product)
+
+      if (!categoryMap.has(categoryKey)) {
+        categoryMap.set(categoryKey, {
+          id: categoryKey,
+          name: categoryName,
+          total: 0,
+          types: new Map(),
+        })
+      }
+
+      const categoryGroup = categoryMap.get(categoryKey)
+      categoryGroup.total += 1
+
+      if (!categoryGroup.types.has(typeKey)) {
+        categoryGroup.types.set(typeKey, {
+          id: typeKey,
+          name: typeName,
+          products: [],
+        })
+      }
+
+      categoryGroup.types.get(typeKey).products.push(product)
+    })
+
+    return Array.from(categoryMap.values()).map((categoryGroup) => ({
+      ...categoryGroup,
+      types: Array.from(categoryGroup.types.values()),
+    }))
+  }, [filteredProducts, getCategoryName, getProductTypeName])
 
   const openCreate = () => {
     setEditing(null)
@@ -267,52 +331,133 @@ export default function Products() {
         </select>
       </section>
 
+      <section className="mb-5 grid gap-4 lg:grid-cols-2">
+        <div className="panel p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-bold text-stone-950">
+            <FolderTree size={18} className="text-amber-800" />
+            {t('products.categoryOverview')}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {categorySummaries.length === 0 ? (
+              <span className="text-sm text-stone-500">{t('categories.empty')}</span>
+            ) : (
+              categorySummaries.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                    categoryFilter === category.id
+                      ? 'border-stone-950 bg-stone-950 text-white'
+                      : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
+                  }`}
+                  onClick={() => setCategoryFilter((current) => (current === category.id ? '' : category.id))}
+                >
+                  {category.name}
+                  <span className="ms-2 text-xs opacity-70">{category.count}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+        <div className="panel p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-bold text-stone-950">
+            <Layers3 size={18} className="text-amber-800" />
+            {t('products.typeOverview')}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {typeSummaries.length === 0 ? (
+              <span className="text-sm text-stone-500">{t('productTypes.empty')}</span>
+            ) : (
+              typeSummaries.map((type) => (
+                <button
+                  key={type.id}
+                  type="button"
+                  className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                    typeFilter === type.id
+                      ? 'border-amber-900 bg-amber-900 text-white'
+                      : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'
+                  }`}
+                  onClick={() => setTypeFilter((current) => (current === type.id ? '' : type.id))}
+                >
+                  {type.name}
+                  <span className="ms-2 text-xs opacity-70">{type.count}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
       {loading ? (
         <div className="panel p-10 text-center text-stone-500">{t('products.loading')}</div>
       ) : filteredProducts.length === 0 ? (
         <div className="panel p-10 text-center text-stone-500">{t('products.empty')}</div>
       ) : (
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredProducts.map((product) => {
-            const images = normalizeProductImages(product.images)
-            return (
-              <article key={product.id} className="panel overflow-hidden">
-                <div className="bg-stone-100 p-2">
-                  {images.length > 0 ? (
-                    <div className="grid gap-2">
-                      {images.map((image, index) => (
-                        <img
-                          key={`${image}-${index}`}
-                          src={getProductImageUrl(image)}
-                          alt={product.name}
-                          className="h-56 w-full rounded object-cover"
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="grid h-56 place-items-center text-stone-400"><ImagePlus size={34} /></div>
-                  )}
+        <section className="space-y-5">
+          {groupedProducts.map((categoryGroup) => (
+            <section key={categoryGroup.id} className="panel overflow-hidden">
+              <div className="flex flex-col gap-2 border-b border-stone-200 bg-stone-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-black text-stone-950">{categoryGroup.name}</h2>
+                  <p className="mt-1 text-sm text-stone-500">{t('products.productsCount', { count: categoryGroup.total })}</p>
                 </div>
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="font-bold text-stone-950">{product.name}</h2>
-                      <p className="mt-1 text-sm text-stone-500">{product.categories?.name || t('common.unassigned')} · {getProductTypeName(product)}</p>
+              </div>
+              <div className="space-y-5 p-4">
+                {categoryGroup.types.map((typeGroup) => (
+                  <div key={typeGroup.id}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h3 className="text-sm font-black text-amber-900">{typeGroup.name}</h3>
+                      <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-bold text-stone-600">
+                        {t('products.productsCount', { count: typeGroup.products.length })}
+                      </span>
                     </div>
-                    <p className="font-black text-amber-900">${Number(product.price || 0).toFixed(2)}</p>
-                  </div>
-                  <p className="mt-3 line-clamp-2 text-sm text-stone-600">{product.description}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-600">{product.weight || t('products.noWeight')}</span>
-                    <div className="flex gap-2">
-                      <button type="button" className="btn-secondary px-3" onClick={() => openEdit(product)}><Edit3 size={15} /></button>
-                      <button type="button" className="btn-secondary px-3 text-red-600" onClick={() => setDeleteTarget(product)}><Trash2 size={15} /></button>
+                    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                      {typeGroup.products.map((product) => {
+                        const images = normalizeProductImages(product.images)
+                        return (
+                          <article key={product.id} className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
+                            <div className="bg-stone-100 p-2">
+                              {images.length > 0 ? (
+                                <div className="grid gap-2">
+                                  {images.map((image, index) => (
+                                    <img
+                                      key={`${image}-${index}`}
+                                      src={getProductImageUrl(image)}
+                                      alt={product.name}
+                                      className="h-56 w-full rounded object-cover"
+                                    />
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="grid h-56 place-items-center text-stone-400"><ImagePlus size={34} /></div>
+                              )}
+                            </div>
+                            <div className="p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <h4 className="truncate font-bold text-stone-950">{product.name}</h4>
+                                  <p className="mt-1 text-sm text-stone-500">{getCategoryName(product)} · {getProductTypeName(product)}</p>
+                                </div>
+                                <p className="shrink-0 font-black text-amber-900">{formatPrice(product.price)}</p>
+                              </div>
+                              <p className="mt-3 line-clamp-2 text-sm text-stone-600">{product.description}</p>
+                              <div className="mt-4 flex items-center justify-between gap-3">
+                                <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-600">{product.weight || t('products.noWeight')}</span>
+                                <div className="flex gap-2">
+                                  <button type="button" className="btn-secondary px-3" onClick={() => openEdit(product)}><Edit3 size={15} /></button>
+                                  <button type="button" className="btn-secondary px-3 text-red-600" onClick={() => setDeleteTarget(product)}><Trash2 size={15} /></button>
+                                </div>
+                              </div>
+                            </div>
+                          </article>
+                        )
+                      })}
                     </div>
                   </div>
-                </div>
-              </article>
-            )
-          })}
+                ))}
+              </div>
+            </section>
+          ))}
         </section>
       )}
 
