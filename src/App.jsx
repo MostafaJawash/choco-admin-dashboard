@@ -8,6 +8,7 @@ import Login from './pages/Login'
 import Orders from './pages/Orders'
 import ProductTypes from './pages/ProductTypes'
 import Products from './pages/Products'
+import Sections from './pages/Sections'
 
 function AdminLayout() {
   const { isRtl } = useI18n()
@@ -35,6 +36,7 @@ function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/product-types" element={<ProductTypes />} />
+        <Route path="/sections" element={<Sections />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

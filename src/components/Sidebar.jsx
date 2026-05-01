@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Layers3,
   Tags,
   X,
 } from 'lucide-react'
@@ -23,6 +24,7 @@ const links = [
   { to: '/products', labelKey: 'nav.products', icon: Boxes },
   { to: '/orders', labelKey: 'nav.orders', icon: ClipboardList },
   { to: '/product-types', labelKey: 'nav.productTypes', icon: Tags },
+  { to: '/sections', labelKey: 'nav.sections', icon: Layers3 },
 ]
 
 const mobileLinks = [
@@ -30,6 +32,7 @@ const mobileLinks = [
   { to: '/categories', labelKey: 'nav.categories', icon: Grid2X2 },
   { to: '/orders', labelKey: 'nav.orders', icon: ClipboardList },
   { to: '/product-types', labelKey: 'nav.productTypes', icon: Tags },
+  { to: '/sections', labelKey: 'nav.sections', icon: Layers3 },
 ]
 
 export default function Sidebar() {
@@ -141,7 +144,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-stone-200 bg-white/95 px-2 pb-2 pt-2 shadow-[0_-8px_24px_rgba(28,25,23,0.08)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-stone-200 bg-white/95 px-2 pb-2 pt-2 shadow-[0_-8px_24px_rgba(28,25,23,0.08)] backdrop-blur md:hidden">
         {mobileLinks.map(({ to, labelKey, icon: Icon }) => (
           <NavLink
             key={to}

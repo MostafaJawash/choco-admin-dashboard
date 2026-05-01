@@ -34,6 +34,7 @@
     "save": "Save",
     "saving": "Saving...",
     "search": "Search",
+    "section": "Section",
     "status": "Status",
     "total": "Total",
     "type": "Type",
@@ -53,6 +54,7 @@
     "products": "Products",
     "orders": "Orders",
     "productTypes": "Product Types",
+    "sections": "Sections",
     "adminSession": "Admin session",
     "workspace": "Protected Supabase workspace",
     "logout": "Logout"
@@ -106,6 +108,20 @@
     "deleteMessage": "Delete \"{{name}}\"? Products linked to this type may need to be reassigned first.",
     "placeholder": "Chocolate Box"
   },
+  "sections": {
+    "eyebrow": "Product classification",
+    "title": "Sections",
+    "subtitle": "Create and maintain product sections such as Men, Women, and Kids.",
+    "add": "Add Section",
+    "edit": "Edit Section",
+    "name": "Section name",
+    "loading": "Loading sections...",
+    "empty": "No sections yet.",
+    "save": "Save Section",
+    "deleteTitle": "Delete section",
+    "deleteMessage": "Delete \"{{name}}\"? Products linked to this section may need to be reassigned first.",
+    "placeholder": "Men"
+  },
   "products": {
     "eyebrow": "Catalog backend",
     "title": "Products",
@@ -115,19 +131,23 @@
     "searchPlaceholder": "Search products...",
     "allCategories": "All categories",
     "allTypes": "All types",
+    "allSections": "All sections",
     "productsCount": "{{count}} products",
     "loading": "Loading products...",
     "empty": "No products match the current filters.",
     "noWeight": "No weight",
     "noCategory": "No category",
     "noType": "No type",
+    "noSection": "No section",
     "typeRequired": "Choose a product type before saving.",
+    "sectionRequired": "Choose a product section before saving.",
     "save": "Save Product",
     "deleteTitle": "Delete product",
     "deleteMessage": "Delete \"{{name}}\" from the product catalog?",
     "invalidImage": "{{name}} is not a supported image file.",
     "publicUrlError": "Could not create a public URL for {{name}}.",
-    "typeLoadError": "Could not load product types."
+    "typeLoadError": "Could not load product types.",
+    "sectionLoadError": "Could not load sections."
   },
   "orders": {
     "eyebrow": "Fulfillment",

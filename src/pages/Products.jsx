@@ -16,6 +16,7 @@ const initialForm = {
   weight: '',
   category_id: '',
   type_id: '',
+  section_id: '',
   images: [],
 }
 
@@ -54,6 +55,7 @@ export default function Products() {
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [productTypes, setProductTypes] = useState([])
+  const [sections, setSections] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -65,21 +67,25 @@ export default function Products() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
+  const [sectionFilter, setSectionFilter] = useState('')
 
   const loadData = useCallback(async () => {
     setError('')
-    const [productResult, categoryResult, productTypeResult] = await Promise.all([
-      supabase.from('products').select('*, categories(name), product_types(name)').order('name', { ascending: true }),
+    const [productResult, categoryResult, productTypeResult, sectionResult] = await Promise.all([
+      supabase.from('products').select('*, categories(name), product_types(name), sections(name)').order('name', { ascending: true }),
       supabase.from('categories').select('*').order('name', { ascending: true }),
       supabase.from('product_types').select('id, name').order('name', { ascending: true }),
+      supabase.from('sections').select('id, name').order('name', { ascending: true }),
     ])
 
     if (productResult.error) setError(productResult.error.message)
     if (categoryResult.error) setError(categoryResult.error.message)
     if (productTypeResult.error) setError(productTypeResult.error.message || t('products.typeLoadError'))
+    if (sectionResult.error) setError(sectionResult.error.message || t('products.sectionLoadError'))
     setProducts(productResult.data || [])
     setCategories(categoryResult.data || [])
     setProductTypes(productTypeResult.data || [])
+    setSections(sectionResult.data || [])
     setLoading(false)
   }, [t])
 
@@ -95,9 +101,10 @@ export default function Products() {
         .includes(search.toLowerCase())
       const matchesCategory = categoryFilter ? product.category_id === categoryFilter : true
       const matchesType = typeFilter ? product.type_id === typeFilter : true
-      return matchesSearch && matchesCategory && matchesType
+      const matchesSection = sectionFilter ? product.section_id === sectionFilter : true
+      return matchesSearch && matchesCategory && matchesType && matchesSection
     })
-  }, [products, search, categoryFilter, typeFilter])
+  }, [products, search, categoryFilter, typeFilter, sectionFilter])
 
   const getProductTypeName = useCallback((product) => {
     return product.product_types?.name || productTypes.find((type) => type.id === product.type_id)?.name || product.type || t('products.noType')
@@ -106,6 +113,10 @@ export default function Products() {
   const getCategoryName = useCallback((product) => {
     return product.categories?.name || categories.find((category) => category.id === product.category_id)?.name || t('common.unassigned')
   }, [categories, t])
+
+  const getSectionName = useCallback((product) => {
+    return product.sections?.name || sections.find((section) => section.id === product.section_id)?.name || t('products.noSection')
+  }, [sections, t])
 
   const formatPrice = (value) => {
     const formatted = new Intl.NumberFormat(language === 'ar' ? 'ar-SY' : 'en-US', {
@@ -155,7 +166,7 @@ export default function Products() {
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ ...initialForm, category_id: categories[0]?.id || '', type_id: productTypes[0]?.id || '' })
+    setForm({ ...initialForm, category_id: categories[0]?.id || '', type_id: productTypes[0]?.id || '', section_id: sections[0]?.id || '' })
     setFiles([])
     setModalOpen(true)
   }
@@ -169,6 +180,7 @@ export default function Products() {
       weight: product.weight || '',
       category_id: product.category_id || '',
       type_id: product.type_id || '',
+      section_id: product.section_id || '',
       images: normalizeProductImages(product.images),
     })
     setFiles([])
@@ -242,6 +254,9 @@ export default function Products() {
       if (!form.type_id) {
         throw new Error(t('products.typeRequired'))
       }
+      if (!form.section_id) {
+        throw new Error(t('products.sectionRequired'))
+      }
 
       const newImages = await uploadImages()
       const payload = {
@@ -251,6 +266,7 @@ export default function Products() {
         weight: form.weight.trim(),
         category_id: form.category_id || null,
         type_id: form.type_id,
+        section_id: form.section_id,
         images: [...form.images, ...newImages].map((image) => image.trim()).filter(Boolean),
       }
 
@@ -302,7 +318,7 @@ export default function Products() {
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-      <section className="panel mb-5 grid gap-3 p-4 md:grid-cols-[1fr_220px_190px]">
+      <section className="panel mb-5 grid gap-3 p-4 md:grid-cols-[1fr_200px_200px_200px]">
         <label className="relative">
           <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
           <input className="field ps-10" placeholder={t('products.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} />
@@ -314,6 +330,10 @@ export default function Products() {
         <select className="field" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
           <option value="">{t('products.allTypes')}</option>
           {productTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
+        </select>
+        <select className="field" value={sectionFilter} onChange={(event) => setSectionFilter(event.target.value)}>
+          <option value="">{t('products.allSections')}</option>
+          {sections.map((section) => <option key={section.id} value={section.id}>{section.name}</option>)}
         </select>
       </section>
 
@@ -374,6 +394,10 @@ export default function Products() {
                                       <span className="text-amber-800/70">{t('common.type')}:</span>
                                       {getProductTypeName(product)}
                                     </span>
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">
+                                      <span className="text-emerald-800/70">{t('common.section')}:</span>
+                                      {getSectionName(product)}
+                                    </span>
                                   </div>
                                 </div>
                                 <p className="shrink-0 font-black text-amber-900">{formatPrice(product.price)}</p>
@@ -415,6 +439,12 @@ export default function Products() {
               <select className="field" value={form.type_id} onChange={(event) => updateForm('type_id', event.target.value)} required>
                 <option value="">{t('products.noType')}</option>
                 {productTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
+              </select>
+            </FormField>
+            <FormField label={t('common.section')}>
+              <select className="field" value={form.section_id} onChange={(event) => updateForm('section_id', event.target.value)} required>
+                <option value="">{t('products.noSection')}</option>
+                {sections.map((section) => <option key={section.id} value={section.id}>{section.name}</option>)}
               </select>
             </FormField>
           </div>

@@ -34,6 +34,7 @@
     "save": "حفظ",
     "saving": "جار الحفظ...",
     "search": "بحث",
+    "section": "القسم",
     "status": "الحالة",
     "total": "الإجمالي",
     "type": "النوع",
@@ -53,6 +54,7 @@
     "products": "المنتجات",
     "orders": "الطلبات",
     "productTypes": "أنواع المنتجات",
+    "sections": "الأقسام",
     "adminSession": "جلسة المدير",
     "workspace": "مساحة عمل Supabase محمية",
     "logout": "تسجيل الخروج"
@@ -106,6 +108,20 @@
     "deleteMessage": "حذف \"{{name}}\"؟ قد تحتاج المنتجات المرتبطة بهذا النوع إلى إعادة تعيين.",
     "placeholder": "علبة شوكولاتة"
   },
+  "sections": {
+    "eyebrow": "تصنيف المنتجات",
+    "title": "الأقسام",
+    "subtitle": "أنشئ وعدل أقسام المنتجات مثل رجال، نساء، وأطفال.",
+    "add": "إضافة قسم",
+    "edit": "تعديل القسم",
+    "name": "اسم القسم",
+    "loading": "جار تحميل الأقسام...",
+    "empty": "لا توجد أقسام بعد.",
+    "save": "حفظ القسم",
+    "deleteTitle": "حذف القسم",
+    "deleteMessage": "حذف \"{{name}}\"؟ قد تحتاج المنتجات المرتبطة بهذا القسم إلى إعادة تعيين.",
+    "placeholder": "رجال"
+  },
   "products": {
     "eyebrow": "إدارة الكتالوج",
     "title": "المنتجات",
@@ -115,19 +131,23 @@
     "searchPlaceholder": "ابحث في المنتجات...",
     "allCategories": "كل الفئات",
     "allTypes": "كل الأنواع",
+    "allSections": "كل الأقسام",
     "productsCount": "{{count}} منتج",
     "loading": "جار تحميل المنتجات...",
     "empty": "لا توجد منتجات تطابق عوامل التصفية الحالية.",
     "noWeight": "لا يوجد وزن",
     "noCategory": "بدون فئة",
     "noType": "بدون نوع",
+    "noSection": "بدون قسم",
     "typeRequired": "اختر نوع المنتج قبل الحفظ.",
+    "sectionRequired": "اختر قسم المنتج قبل الحفظ.",
     "save": "حفظ المنتج",
     "deleteTitle": "حذف المنتج",
     "deleteMessage": "حذف \"{{name}}\" من كتالوج المنتجات؟",
     "invalidImage": "{{name}} ليس ملف صورة مدعوماً.",
     "publicUrlError": "تعذر إنشاء رابط عام للملف {{name}}.",
-    "typeLoadError": "تعذر تحميل أنواع المنتجات."
+    "typeLoadError": "تعذر تحميل أنواع المنتجات.",
+    "sectionLoadError": "تعذر تحميل الأقسام."
   },
   "orders": {
     "eyebrow": "تنفيذ الطلبات",
