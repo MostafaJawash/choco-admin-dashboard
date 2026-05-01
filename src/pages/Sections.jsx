@@ -1,16 +1,17 @@
 import { Edit3, Layers3, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
 import { useI18n } from '../i18n/useI18n'
 import { supabase } from '../lib/supabaseClient'
 
-const initialForm = { name: '' }
+const initialForm = { name: '', type_id: '' }
 
 export default function Sections() {
   const { t } = useI18n()
   const [sections, setSections] = useState([])
+  const [productTypes, setProductTypes] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -19,31 +20,39 @@ export default function Sections() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [error, setError] = useState('')
 
-  const loadSections = async () => {
+  const loadSections = useCallback(async () => {
     setError('')
-    const { data, error: loadError } = await supabase
-      .from('sections')
-      .select('id, name')
-      .order('name', { ascending: true })
+    const [sectionResult, productTypeResult] = await Promise.all([
+      supabase
+        .from('sections')
+        .select('id, name, type_id, product_types(name)')
+        .order('name', { ascending: true }),
+      supabase
+        .from('product_types')
+        .select('id, name')
+        .order('name', { ascending: true }),
+    ])
 
-    if (loadError) setError(loadError.message)
-    setSections(data || [])
+    if (sectionResult.error) setError(sectionResult.error.message)
+    if (productTypeResult.error) setError(productTypeResult.error.message || t('sections.typeLoadError'))
+    setSections(sectionResult.data || [])
+    setProductTypes(productTypeResult.data || [])
     setLoading(false)
-  }
+  }, [t])
 
   useEffect(() => {
     Promise.resolve().then(loadSections)
-  }, [])
+  }, [loadSections])
 
   const openCreate = () => {
     setEditing(null)
-    setForm(initialForm)
+    setForm({ ...initialForm, type_id: productTypes[0]?.id || '' })
     setModalOpen(true)
   }
 
   const openEdit = (section) => {
     setEditing(section)
-    setForm({ name: section.name || '' })
+    setForm({ name: section.name || '', type_id: section.type_id || '' })
     setModalOpen(true)
   }
 
@@ -52,7 +61,13 @@ export default function Sections() {
     setSaving(true)
     setError('')
 
-    const payload = { name: form.name.trim() }
+    if (!form.type_id) {
+      setSaving(false)
+      setError(t('sections.typeRequired'))
+      return
+    }
+
+    const payload = { name: form.name.trim(), type_id: form.type_id }
     const request = editing
       ? supabase.from('sections').update(payload).eq('id', editing.id)
       : supabase.from('sections').insert(payload)
@@ -112,18 +127,21 @@ export default function Sections() {
       ) : (
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {sections.map((section) => (
-            <article key={section.id} className="panel flex items-center justify-between gap-4 p-4">
+            <article key={section.id} className="panel flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-700">
                   <Layers3 size={18} />
                 </div>
-                <h2 className="truncate font-bold text-stone-950">{section.name}</h2>
+                <div className="min-w-0">
+                  <h2 className="break-words text-base font-bold text-stone-950">{section.name}</h2>
+                  <p className="mt-1 text-sm text-stone-500">{section.product_types?.name || t('products.noType')}</p>
+                </div>
               </div>
-              <div className="flex shrink-0 gap-2">
-                <button type="button" className="btn-secondary px-3" onClick={() => openEdit(section)}>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+                <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => openEdit(section)}>
                   <Edit3 size={15} />
                 </button>
-                <button type="button" className="btn-secondary px-3 text-red-600" onClick={() => setDeleteTarget(section)}>
+                <button type="button" className="btn-secondary min-h-11 px-3 text-red-600" onClick={() => setDeleteTarget(section)}>
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -142,6 +160,17 @@ export default function Sections() {
               required
               placeholder={t('sections.placeholder')}
             />
+          </FormField>
+          <FormField label={t('sections.productType')}>
+            <select
+              className="field min-h-11"
+              value={form.type_id}
+              onChange={(event) => setForm((current) => ({ ...current, type_id: event.target.value }))}
+              required
+            >
+              <option value="">{t('sections.noProductType')}</option>
+              {productTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
+            </select>
           </FormField>
           <div className="flex justify-end gap-3">
             <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>{t('common.cancel')}</button>

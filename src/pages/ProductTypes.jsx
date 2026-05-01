@@ -112,18 +112,18 @@ export default function ProductTypes() {
       ) : (
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {productTypes.map((productType) => (
-            <article key={productType.id} className="panel flex items-center justify-between gap-4 p-4">
+            <article key={productType.id} className="panel flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-900">
                   <Tags size={18} />
                 </div>
-                <h2 className="truncate font-bold text-stone-950">{productType.name}</h2>
+                <h2 className="min-w-0 break-words text-base font-bold text-stone-950">{productType.name}</h2>
               </div>
-              <div className="flex shrink-0 gap-2">
-                <button type="button" className="btn-secondary px-3" onClick={() => openEdit(productType)}>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+                <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => openEdit(productType)}>
                   <Edit3 size={15} />
                 </button>
-                <button type="button" className="btn-secondary px-3 text-red-600" onClick={() => setDeleteTarget(productType)}>
+                <button type="button" className="btn-secondary min-h-11 px-3 text-red-600" onClick={() => setDeleteTarget(productType)}>
                   <Trash2 size={15} />
                 </button>
               </div>
