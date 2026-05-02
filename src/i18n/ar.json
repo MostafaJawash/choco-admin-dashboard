@@ -171,6 +171,8 @@
     "quantity": "الكمية",
     "fallbackProduct": "منتج {{id}}",
     "totalPrice": "السعر الإجمالي",
+    "discount": "الخصم",
+    "final": "الحصم",
     "createdAt": "التاريخ",
     "statuses": {
       "new": "جديد",

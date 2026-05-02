@@ -171,6 +171,8 @@
     "quantity": "Qty",
     "fallbackProduct": "Product {{id}}",
     "totalPrice": "Total price",
+    "discount": "Discount",
+    "final": "Final",
     "createdAt": "Date",
     "statuses": {
       "new": "New",
