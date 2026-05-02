@@ -5,11 +5,23 @@ import Table from '../components/Table'
 import { useI18n } from '../i18n/useI18n'
 import { supabase } from '../lib/supabaseClient'
 
-const statuses = ['new', 'processing', 'delivered']
+const statuses = ['new', 'installing', 'preparing', 'shipping', 'delivered']
 const statusStyles = {
-  new: 'bg-amber-100 text-amber-900',
-  processing: 'bg-blue-100 text-blue-800',
+  new: 'bg-sky-100 text-sky-900',
+  installing: 'bg-violet-100 text-violet-900',
+  preparing: 'bg-amber-100 text-amber-900',
+  shipping: 'bg-orange-100 text-orange-900',
   delivered: 'bg-emerald-100 text-emerald-800',
+}
+
+const legacyStatusMap = {
+  processing: 'preparing',
+}
+
+const normalizeStatus = (value) => {
+  const current = String(value || '').toLowerCase()
+  if (statuses.includes(current)) return current
+  return legacyStatusMap[current] || 'new'
 }
 
 function calculateTotal(order) {
@@ -58,7 +70,7 @@ export default function Orders() {
         .join(' ')
         .toLowerCase()
       const matchesSearch = text.includes(search.toLowerCase())
-      const matchesStatus = statusFilter ? order.status === statusFilter : true
+      const matchesStatus = statusFilter ? normalizeStatus(order.status) === statusFilter : true
       return matchesSearch && matchesStatus
     })
   }, [orders, search, statusFilter])
@@ -115,8 +127,8 @@ export default function Orders() {
       header: t('common.status'),
       render: (row) => (
         <select
-          className={`rounded-full border-0 px-3 py-1 text-xs font-bold capitalize outline-none ${statusStyles[row.status] || statusStyles.new}`}
-          value={row.status || 'new'}
+          className={`rounded-full border-0 px-3 py-1 text-xs font-bold outline-none ${statusStyles[normalizeStatus(row.status)] || statusStyles.new}`}
+          value={normalizeStatus(row.status)}
           onChange={(event) => updateStatus(row.id, event.target.value)}
           disabled={savingId === row.id}
         >
@@ -186,8 +198,8 @@ export default function Orders() {
                       <p className="mt-1 text-sm text-stone-500">{order.phone}</p>
                     </div>
                     <select
-                      className={`shrink-0 rounded-full border-0 px-3 py-1 text-xs font-bold capitalize outline-none ${statusStyles[order.status] || statusStyles.new}`}
-                      value={order.status || 'new'}
+                      className={`shrink-0 rounded-full border-0 px-3 py-1 text-xs font-bold outline-none ${statusStyles[normalizeStatus(order.status)] || statusStyles.new}`}
+                      value={normalizeStatus(order.status)}
                       onChange={(event) => updateStatus(order.id, event.target.value)}
                       disabled={savingId === order.id}
                     >
@@ -229,7 +241,7 @@ export default function Orders() {
               </div>
               <div className="rounded-lg bg-stone-50 p-4">
                 <p className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('common.status')}</p>
-                <select className="field mt-2 capitalize" value={selectedOrder.status || 'new'} onChange={(event) => updateStatus(selectedOrder.id, event.target.value)}>
+                <select className="field mt-2" value={normalizeStatus(selectedOrder.status)} onChange={(event) => updateStatus(selectedOrder.id, event.target.value)}>
                   {statuses.map((status) => <option key={status} value={status}>{t(`orders.statuses.${status}`)}</option>)}
                 </select>
               </div>

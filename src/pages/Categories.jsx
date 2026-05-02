@@ -1,12 +1,13 @@
-import { Edit3, Grid2X2, Plus, Trash2 } from 'lucide-react'
+import { Edit3, Grid2X2, ImagePlus, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
 import { useI18n } from '../i18n/useI18n'
+import { resolveImageUrl, uploadImageFile } from '../lib/imageUpload'
 import { supabase } from '../lib/supabaseClient'
 
-const initialForm = { name: '' }
+const initialForm = { name: '', image_url: '' }
 
 export default function Categories() {
   const { t } = useI18n()
@@ -16,6 +17,7 @@ export default function Categories() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(initialForm)
+  const [imageFile, setImageFile] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [error, setError] = useState('')
 
@@ -37,12 +39,14 @@ export default function Categories() {
   const openCreate = () => {
     setEditing(null)
     setForm(initialForm)
+    setImageFile(null)
     setModalOpen(true)
   }
 
   const openEdit = (category) => {
     setEditing(category)
-    setForm({ name: category.name || '' })
+    setForm({ name: category.name || '', image_url: category.image_url || '' })
+    setImageFile(null)
     setModalOpen(true)
   }
 
@@ -51,22 +55,25 @@ export default function Categories() {
     setSaving(true)
     setError('')
 
-    const payload = { name: form.name.trim() }
-    const request = editing
-      ? supabase.from('categories').update(payload).eq('id', editing.id)
-      : supabase.from('categories').insert(payload)
+    try {
+      let imageUrl = form.image_url.trim()
+      if (imageFile) imageUrl = await uploadImageFile(imageFile, 'categories')
+      const payload = { name: form.name.trim(), image_url: imageUrl || null }
+      const request = editing
+        ? supabase.from('categories').update(payload).eq('id', editing.id)
+        : supabase.from('categories').insert(payload)
 
-    const { error: saveError } = await request
-    setSaving(false)
+      const { error: saveError } = await request
+      if (saveError) throw saveError
 
-    if (saveError) {
+      setModalOpen(false)
+      setLoading(true)
+      loadCategories()
+    } catch (saveError) {
       setError(saveError.message)
-      return
+    } finally {
+      setSaving(false)
     }
-
-    setModalOpen(false)
-    setLoading(true)
-    loadCategories()
   }
 
   const deleteCategory = async () => {
@@ -109,22 +116,33 @@ export default function Categories() {
       ) : categories.length === 0 ? (
         <div className="panel p-10 text-center text-stone-500">{t('categories.empty')}</div>
       ) : (
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((category) => (
-            <article key={category.id} className="panel flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-700">
-                  <Grid2X2 size={18} />
-                </div>
-                <h2 className="min-w-0 break-words text-base font-bold text-stone-950">{category.name}</h2>
+            <article key={category.id} className="panel overflow-hidden">
+              <div className="h-44 bg-stone-100">
+                {category.image_url ? (
+                  <img src={resolveImageUrl(category.image_url)} alt={category.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full place-items-center text-stone-500">
+                    <Grid2X2 size={34} />
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-                <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => openEdit(category)}>
-                  <Edit3 size={15} />
-                </button>
-                <button type="button" className="btn-secondary min-h-11 px-3 text-red-600" onClick={() => setDeleteTarget(category)}>
-                  <Trash2 size={15} />
-                </button>
+              <div className="space-y-4 p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-700">
+                    <ImagePlus size={18} />
+                  </div>
+                  <h2 className="min-w-0 break-words text-base font-bold text-stone-950">{category.name}</h2>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => openEdit(category)}>
+                    <Edit3 size={15} />
+                  </button>
+                  <button type="button" className="btn-secondary min-h-11 px-3 text-red-600" onClick={() => setDeleteTarget(category)}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
             </article>
           ))}
@@ -141,6 +159,17 @@ export default function Categories() {
               required
               placeholder={t('categories.placeholder')}
             />
+          </FormField>
+          <FormField label={t('common.imageUrl')}>
+            <input
+              className="field"
+              value={form.image_url}
+              onChange={(event) => setForm((current) => ({ ...current, image_url: event.target.value }))}
+              placeholder="https://..."
+            />
+          </FormField>
+          <FormField label={t('common.imageUpload')}>
+            <input className="field" type="file" accept="image/*" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
           </FormField>
           <div className="flex justify-end gap-3">
             <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>{t('common.cancel')}</button>

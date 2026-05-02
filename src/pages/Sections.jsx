@@ -1,12 +1,13 @@
-import { Edit3, Layers3, Plus, Trash2 } from 'lucide-react'
+import { Edit3, ImagePlus, Layers3, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
 import { useI18n } from '../i18n/useI18n'
+import { resolveImageUrl, uploadImageFile } from '../lib/imageUpload'
 import { supabase } from '../lib/supabaseClient'
 
-const initialForm = { name: '', type_id: '' }
+const initialForm = { name: '', type_id: '', image_url: '' }
 
 export default function Sections() {
   const { t } = useI18n()
@@ -17,6 +18,7 @@ export default function Sections() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(initialForm)
+  const [imageFile, setImageFile] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [error, setError] = useState('')
 
@@ -25,7 +27,7 @@ export default function Sections() {
     const [sectionResult, productTypeResult] = await Promise.all([
       supabase
         .from('sections')
-        .select('id, name, type_id, product_types(name)')
+        .select('id, name, type_id, image_url, product_types(name)')
         .order('name', { ascending: true }),
       supabase
         .from('product_types')
@@ -47,12 +49,14 @@ export default function Sections() {
   const openCreate = () => {
     setEditing(null)
     setForm({ ...initialForm, type_id: productTypes[0]?.id || '' })
+    setImageFile(null)
     setModalOpen(true)
   }
 
   const openEdit = (section) => {
     setEditing(section)
-    setForm({ name: section.name || '', type_id: section.type_id || '' })
+    setForm({ name: section.name || '', type_id: section.type_id || '', image_url: section.image_url || '' })
+    setImageFile(null)
     setModalOpen(true)
   }
 
@@ -67,22 +71,25 @@ export default function Sections() {
       return
     }
 
-    const payload = { name: form.name.trim(), type_id: form.type_id }
-    const request = editing
-      ? supabase.from('sections').update(payload).eq('id', editing.id)
-      : supabase.from('sections').insert(payload)
+    try {
+      let imageUrl = form.image_url.trim()
+      if (imageFile) imageUrl = await uploadImageFile(imageFile, 'sections')
+      const payload = { name: form.name.trim(), type_id: form.type_id, image_url: imageUrl || null }
+      const request = editing
+        ? supabase.from('sections').update(payload).eq('id', editing.id)
+        : supabase.from('sections').insert(payload)
 
-    const { error: saveError } = await request
-    setSaving(false)
+      const { error: saveError } = await request
+      if (saveError) throw saveError
 
-    if (saveError) {
+      setModalOpen(false)
+      setLoading(true)
+      loadSections()
+    } catch (saveError) {
       setError(saveError.message)
-      return
+    } finally {
+      setSaving(false)
     }
-
-    setModalOpen(false)
-    setLoading(true)
-    loadSections()
   }
 
   const deleteSection = async () => {
@@ -125,25 +132,36 @@ export default function Sections() {
       ) : sections.length === 0 ? (
         <div className="panel p-10 text-center text-stone-500">{t('sections.empty')}</div>
       ) : (
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {sections.map((section) => (
-            <article key={section.id} className="panel flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-700">
-                  <Layers3 size={18} />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="break-words text-base font-bold text-stone-950">{section.name}</h2>
-                  <p className="mt-1 text-sm text-stone-500">{section.product_types?.name || t('products.noType')}</p>
-                </div>
+            <article key={section.id} className="panel overflow-hidden">
+              <div className="h-44 bg-stone-100">
+                {section.image_url ? (
+                  <img src={resolveImageUrl(section.image_url)} alt={section.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full place-items-center text-stone-500">
+                    <Layers3 size={34} />
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-                <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => openEdit(section)}>
-                  <Edit3 size={15} />
-                </button>
-                <button type="button" className="btn-secondary min-h-11 px-3 text-red-600" onClick={() => setDeleteTarget(section)}>
-                  <Trash2 size={15} />
-                </button>
+              <div className="space-y-4 p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-700">
+                    <ImagePlus size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="break-words text-base font-bold text-stone-950">{section.name}</h2>
+                    <p className="mt-1 text-sm text-stone-500">{section.product_types?.name || t('products.noType')}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => openEdit(section)}>
+                    <Edit3 size={15} />
+                  </button>
+                  <button type="button" className="btn-secondary min-h-11 px-3 text-red-600" onClick={() => setDeleteTarget(section)}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
             </article>
           ))}
@@ -171,6 +189,17 @@ export default function Sections() {
               <option value="">{t('sections.noProductType')}</option>
               {productTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
             </select>
+          </FormField>
+          <FormField label={t('common.imageUrl')}>
+            <input
+              className="field"
+              value={form.image_url}
+              onChange={(event) => setForm((current) => ({ ...current, image_url: event.target.value }))}
+              placeholder="https://..."
+            />
+          </FormField>
+          <FormField label={t('common.imageUpload')}>
+            <input className="field" type="file" accept="image/*" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
           </FormField>
           <div className="flex justify-end gap-3">
             <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>{t('common.cancel')}</button>

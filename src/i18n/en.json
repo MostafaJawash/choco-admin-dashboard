@@ -22,6 +22,8 @@
     "email": "Email",
     "id": "ID",
     "images": "Images",
+    "imageUrl": "Image URL",
+    "imageUpload": "Upload Image",
     "live": "Live",
     "loading": "Loading...",
     "name": "Name",
@@ -53,6 +55,8 @@
     "categories": "Categories",
     "products": "Products",
     "orders": "Orders",
+    "coupons": "Coupons",
+    "users": "Users",
     "productTypes": "Product Types",
     "sections": "Sections",
     "adminSession": "Admin session",
@@ -170,8 +174,39 @@
     "createdAt": "Date",
     "statuses": {
       "new": "New",
-      "processing": "Processing",
+      "installing": "Installing",
+      "preparing": "Preparing",
+      "shipping": "Shipping",
       "delivered": "Delivered"
     }
+  },
+  "coupons": {
+    "eyebrow": "Discount management",
+    "title": "Coupons",
+    "subtitle": "Manage discount coupons, activation, and expiration dates.",
+    "add": "Add Coupon",
+    "edit": "Edit Coupon",
+    "loading": "Loading coupons...",
+    "empty": "No coupons found.",
+    "code": "Coupon code",
+    "discount": "Discount %",
+    "expiration": "Expiration date",
+    "isActive": "Coupon is active",
+    "deleteTitle": "Delete coupon",
+    "deleteMessage": "Delete coupon \"{{code}}\"?",
+    "statuses": {
+      "active": "Active",
+      "expired": "Expired",
+      "inactive": "Inactive"
+    }
+  },
+  "users": {
+    "eyebrow": "Customer directory",
+    "title": "Users",
+    "subtitle": "View users from the profiles table.",
+    "loading": "Loading users...",
+    "empty": "No users found.",
+    "fullName": "Full name",
+    "phone": "Phone"
   }
 }

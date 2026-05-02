@@ -3,12 +3,14 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Sidebar from './components/Sidebar'
 import { useI18n } from './i18n/useI18n'
 import Categories from './pages/Categories'
+import Coupons from './pages/Coupons'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Orders from './pages/Orders'
 import ProductTypes from './pages/ProductTypes'
 import Products from './pages/Products'
 import Sections from './pages/Sections'
+import Users from './pages/Users'
 
 function AdminLayout() {
   const { isRtl } = useI18n()
@@ -35,6 +37,8 @@ function App() {
         <Route path="/categories" element={<Categories />} />
         <Route path="/products" element={<Products />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/coupons" element={<Coupons />} />
+        <Route path="/users" element={<Users />} />
         <Route path="/product-types" element={<ProductTypes />} />
         <Route path="/sections" element={<Sections />} />
       </Route>
