@@ -172,7 +172,7 @@
     "fallbackProduct": "منتج {{id}}",
     "totalPrice": "السعر الإجمالي",
     "discount": "الخصم",
-    "final": "الحصم",
+    "final": "السعر بعد الخصم",
     "createdAt": "التاريخ",
     "statuses": {
       "new": "جديد",
