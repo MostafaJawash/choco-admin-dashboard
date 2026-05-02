@@ -34,7 +34,7 @@ function calculateTotal(order) {
 }
 
 function getAmounts(order) {
-  const base = Number(order.total_amount ?? order.total_price ?? calculateTotal(order) || 0)
+  const base = Number(order.total_amount ?? order.total_price ?? calculateTotal(order) ?? 0)
   const discount = Number(order.discount_amount || 0)
   const final = Number(order.final_amount ?? (base - discount))
   return { total: base, discount, final }
