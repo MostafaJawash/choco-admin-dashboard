@@ -9,7 +9,6 @@ import {
   Menu,
   Layers3,
   Tags,
-  Users,
   X,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -36,7 +35,6 @@ const mobileLinks = [
   { to: '/categories', labelKey: 'nav.categories', icon: Grid2X2 },
   { to: '/orders', labelKey: 'nav.orders', icon: ClipboardList },
   { to: '/coupons', labelKey: 'nav.coupons', icon: TicketPercent },
-  { to: '/users', labelKey: 'nav.users', icon: Users },
   { to: '/product-types', labelKey: 'nav.productTypes', icon: Tags },
   { to: '/sections', labelKey: 'nav.sections', icon: Layers3 },
 ]
@@ -150,7 +148,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-stone-200 bg-white/95 px-2 pb-2 pt-2 shadow-[0_-8px_24px_rgba(28,25,23,0.08)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-stone-200 bg-white/95 px-2 pb-2 pt-2 shadow-[0_-8px_24px_rgba(28,25,23,0.08)] backdrop-blur md:hidden">
         {mobileLinks.map(({ to, labelKey, icon: Icon }) => (
           <NavLink
             key={to}
