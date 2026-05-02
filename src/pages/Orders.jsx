@@ -33,6 +33,13 @@ function calculateTotal(order) {
   }, 0)
 }
 
+function getAmounts(order) {
+  const base = Number(order.total_amount ?? order.total_price ?? calculateTotal(order) || 0)
+  const discount = Number(order.discount_amount || 0)
+  const final = Number(order.final_amount ?? (base - discount))
+  return { total: base, discount, final }
+}
+
 export default function Orders() {
   const { language, t } = useI18n()
   const [orders, setOrders] = useState([])
@@ -139,7 +146,20 @@ export default function Orders() {
     {
       key: 'total',
       header: t('common.total'),
-      render: (row) => <span className="font-bold text-stone-950">{formatCurrency(calculateTotal(row))}</span>,
+      render: (row) => {
+        const { total, discount, final } = getAmounts(row)
+        return (
+          <div>
+            <div className="font-bold text-stone-950">{formatCurrency(total)}</div>
+            {(discount > 0 || final !== total) && (
+              <div className="mt-1 text-xs text-stone-500">
+                {discount > 0 && <span className="me-2">{t('orders.discount') || 'Discount'}: {formatCurrency(discount)}</span>}
+                {final !== total && <span>{t('orders.final') || 'Final'}: {formatCurrency(final)}</span>}
+              </div>
+            )}
+          </div>
+        )
+      },
     },
     {
       key: 'created_at',
@@ -209,12 +229,15 @@ export default function Orders() {
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                     <div className="rounded-lg bg-stone-50 p-3">
                       <p className="text-xs font-bold text-stone-500">{t('common.total')}</p>
-                      <p className="mt-1 font-black text-stone-950">{formatCurrency(calculateTotal(order))}</p>
+                          <p className="mt-1 font-black text-stone-950">{formatCurrency(getAmounts(order).total)}</p>
                     </div>
-                    <div className="rounded-lg bg-stone-50 p-3">
-                      <p className="text-xs font-bold text-stone-500">{t('orders.createdAt')}</p>
-                      <p className="mt-1 font-semibold text-stone-700">{formatDate(order.created_at)}</p>
-                    </div>
+                        <div className="rounded-lg bg-stone-50 p-3">
+                          <p className="text-xs font-bold text-stone-500">{t('orders.final') || 'Final'}</p>
+                          <p className="mt-1 font-black text-stone-950">{formatCurrency(getAmounts(order).final)}</p>
+                          {getAmounts(order).discount > 0 && (
+                            <p className="mt-1 text-xs text-stone-500">{t('orders.discount') || 'Discount'}: {formatCurrency(getAmounts(order).discount)}</p>
+                          )}
+                        </div>
                   </div>
                   <button type="button" className="btn-secondary mt-4 w-full" onClick={() => setSelectedOrder(order)}>
                     <Eye size={15} />
@@ -276,9 +299,21 @@ export default function Orders() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 rounded-xl bg-stone-950 px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
-              <span className="text-sm font-semibold">{t('orders.totalPrice')}</span>
-              <span className="text-2xl font-black">{formatCurrency(calculateTotal(selectedOrder))}</span>
+            <div className="rounded-xl bg-stone-950 px-5 py-4 text-white">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="text-center">
+                  <p className="text-xs font-semibold">{t('orders.totalPrice')}</p>
+                  <p className="mt-1 text-lg font-black">{formatCurrency(getAmounts(selectedOrder).total)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-semibold">{t('orders.discount') || 'Discount'}</p>
+                  <p className="mt-1 text-lg font-semibold">{formatCurrency(getAmounts(selectedOrder).discount)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-semibold">{t('orders.final') || 'Final'}</p>
+                  <p className="mt-1 text-lg font-black">{formatCurrency(getAmounts(selectedOrder).final)}</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
