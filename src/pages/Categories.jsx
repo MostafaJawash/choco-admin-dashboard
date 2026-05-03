@@ -7,7 +7,7 @@ import { useI18n } from '../i18n/useI18n'
 import { resolveImageUrl, uploadImageFile } from '../lib/imageUpload'
 import { supabase } from '../lib/supabaseClient'
 
-const initialForm = { name: '', image_url: '' }
+const initialForm = { name: '' }
 
 export default function Categories() {
   const { t } = useI18n()
@@ -45,7 +45,7 @@ export default function Categories() {
 
   const openEdit = (category) => {
     setEditing(category)
-    setForm({ name: category.name || '', image_url: category.image_url || '' })
+    setForm({ name: category.name || '' })
     setImageFile(null)
     setModalOpen(true)
   }
@@ -56,7 +56,7 @@ export default function Categories() {
     setError('')
 
     try {
-      let imageUrl = form.image_url.trim()
+      let imageUrl = editing?.image_url || null
       if (imageFile) imageUrl = await uploadImageFile(imageFile, 'categories')
       const payload = { name: form.name.trim(), image_url: imageUrl || null }
       const request = editing
@@ -158,14 +158,6 @@ export default function Categories() {
               onChange={(event) => setForm({ name: event.target.value })}
               required
               placeholder={t('categories.placeholder')}
-            />
-          </FormField>
-          <FormField label={t('common.imageUrl')}>
-            <input
-              className="field"
-              value={form.image_url}
-              onChange={(event) => setForm((current) => ({ ...current, image_url: event.target.value }))}
-              placeholder="https://..."
             />
           </FormField>
           <FormField label={t('common.imageUpload')}>

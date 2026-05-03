@@ -6,6 +6,8 @@ import { useI18n } from '../i18n/useI18n'
 import { supabase } from '../lib/supabaseClient'
 
 const statuses = ['new', 'installing', 'preparing', 'shipping', 'delivered']
+const PRODUCT_IMAGES_BUCKET = 'product-images'
+const PRODUCT_IMAGES_PUBLIC_PATH = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`
 const statusStyles = {
   new: 'bg-sky-100 text-sky-900',
   installing: 'bg-violet-100 text-violet-900',
@@ -16,6 +18,51 @@ const statusStyles = {
 
 const legacyStatusMap = {
   processing: 'preparing',
+}
+
+const normalizeProductImages = (images) => {
+  if (!images) return []
+
+  if (Array.isArray(images)) {
+    return images.map((image) => String(image || '').trim()).filter(Boolean)
+  }
+
+  if (typeof images !== 'string') return []
+
+  const trimmedImages = images.trim()
+  if (!trimmedImages) return []
+
+  try {
+    const parsedImages = JSON.parse(trimmedImages)
+
+    if (Array.isArray(parsedImages)) {
+      return parsedImages.map((image) => String(image || '').trim()).filter(Boolean)
+    }
+
+    if (typeof parsedImages === 'string') {
+      const parsedImage = parsedImages.trim()
+      return parsedImage ? [parsedImage] : []
+    }
+  } catch {
+    return [trimmedImages]
+  }
+
+  return []
+}
+
+const getProductImageUrl = (image) => {
+  const value = String(image || '').trim()
+  if (!value) return ''
+
+  if (/^https?:\/\//i.test(value)) return value
+
+  const storagePath = value
+    .replace(/^\/+/, '')
+    .replace(new RegExp(`^${PRODUCT_IMAGES_BUCKET}/`), '')
+    .replace(PRODUCT_IMAGES_PUBLIC_PATH.replace(/^\//, ''), '')
+    .trim()
+
+  return supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(storagePath).data.publicUrl
 }
 
 const normalizeStatus = (value) => {
@@ -55,7 +102,7 @@ export default function Orders() {
 
     let result = await supabase
       .from('orders')
-      .select('*, order_items(*, products(name, price, images))')
+      .select('*, order_items(*, products(name, price, description, weight, images, categories(name), product_types(name), sections(name)))')
       .order('created_at', { ascending: false })
 
     if (result.error) {
@@ -250,7 +297,7 @@ export default function Orders() {
         </>
       )}
 
-      <Modal open={Boolean(selectedOrder)} title={t('orders.detailsTitle')} onClose={() => setSelectedOrder(null)} size="max-w-3xl">
+      <Modal open={Boolean(selectedOrder)} title={t('orders.detailsTitle')} onClose={() => setSelectedOrder(null)} size="max-w-5xl">
         {selectedOrder && (
           <div className="space-y-6">
             <div className="grid gap-3 md:grid-cols-3">
@@ -277,22 +324,85 @@ export default function Orders() {
 
             <div>
               <h3 className="mb-3 font-bold text-stone-950">{t('orders.orderedProducts')}</h3>
-              <div className="divide-y divide-stone-100 overflow-hidden rounded-xl border border-stone-200">
+              <div className="space-y-4">
                 {(selectedOrder.order_items || []).length === 0 ? (
-                  <p className="p-4 text-sm text-stone-500">{t('orders.noItems')}</p>
+                  <p className="rounded-xl border border-stone-200 p-4 text-sm text-stone-500">{t('orders.noItems')}</p>
                 ) : (
                   selectedOrder.order_items.map((item) => {
-                    const productName = item.products?.name || item.product_name || t('orders.fallbackProduct', { id: item.product_id || '' })
-                    const price = Number(item.price || item.products?.price || 0)
+                    const product = item.products || {}
+                    const images = normalizeProductImages(product.images)
+                    const image = images[0]
+                    const productName = product.name || item.product_name || t('orders.fallbackProduct', { id: item.product_id || '' })
+                    const unitPrice = Number(item.price || product.price || 0)
                     const quantity = Number(item.quantity || 1)
+                    const total = unitPrice * quantity
+                    const categoryName = product.categories?.name || t('common.unassigned')
+                    const typeName = product.product_types?.name || t('products.noType')
+                    const sectionName = product.sections?.name || t('products.noSection')
+                    const weight = product.weight || t('products.noWeight')
+
                     return (
-                      <div key={item.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="font-semibold text-stone-950">{productName}</p>
-                          <p className="text-sm text-stone-500">{t('orders.quantity')} {quantity} · {formatCurrency(price)}</p>
+                      <article key={item.id} className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+                        <div className="grid gap-0 md:grid-cols-[180px_minmax(0,1fr)]">
+                          <div className="bg-stone-100">
+                            {image ? (
+                              <img src={getProductImageUrl(image)} alt={productName} className="h-52 w-full object-cover md:h-full" />
+                            ) : (
+                              <div className="grid h-52 place-items-center text-stone-400 md:h-full">
+                                <Eye size={34} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-4 p-4 md:p-5">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold uppercase tracking-[0.2em] text-stone-500">{t('orders.productDetails')}</p>
+                                <h4 className="mt-1 text-xl font-black text-stone-950">{productName}</h4>
+                                {product.description && <p className="mt-2 text-sm leading-6 text-stone-600">{product.description}</p>}
+                              </div>
+                              <div className="shrink-0 rounded-xl bg-amber-50 px-4 py-3 text-start">
+                                <p className="text-xs font-bold uppercase tracking-wide text-amber-800">{t('common.price')}</p>
+                                <p className="mt-1 text-lg font-black text-amber-950">{formatCurrency(unitPrice)}</p>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                              <div className="rounded-xl bg-stone-50 p-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('common.category')}</p>
+                                <p className="mt-1 break-words text-sm font-semibold text-stone-950">{categoryName}</p>
+                              </div>
+                              <div className="rounded-xl bg-stone-50 p-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('common.type')}</p>
+                                <p className="mt-1 break-words text-sm font-semibold text-stone-950">{typeName}</p>
+                              </div>
+                              <div className="rounded-xl bg-stone-50 p-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('common.section')}</p>
+                                <p className="mt-1 break-words text-sm font-semibold text-stone-950">{sectionName}</p>
+                              </div>
+                              <div className="rounded-xl bg-stone-50 p-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('common.weight')}</p>
+                                <p className="mt-1 break-words text-sm font-semibold text-stone-950">{weight}</p>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-3">
+                              <div className="rounded-xl border border-stone-200 p-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('orders.quantity')}</p>
+                                <p className="mt-1 text-2xl font-black text-stone-950">{quantity}</p>
+                              </div>
+                              <div className="rounded-xl border border-stone-200 p-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('orders.unitPrice')}</p>
+                                <p className="mt-1 text-lg font-bold text-stone-950">{formatCurrency(unitPrice)}</p>
+                              </div>
+                              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                                <p className="text-xs font-bold uppercase tracking-wide text-amber-800">{t('orders.lineTotal')}</p>
+                                <p className="mt-1 text-lg font-black text-amber-950">{formatCurrency(total)}</p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <p className="font-bold text-stone-950">{formatCurrency(price * quantity)}</p>
-                      </div>
+
+                      </article>
                     )
                   })
                 )}

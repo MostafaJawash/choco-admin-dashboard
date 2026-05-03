@@ -55,7 +55,7 @@ export default function Sections() {
 
   const openEdit = (section) => {
     setEditing(section)
-    setForm({ name: section.name || '', type_id: section.type_id || '', image_url: section.image_url || '' })
+    setForm({ name: section.name || '', type_id: section.type_id || '' })
     setImageFile(null)
     setModalOpen(true)
   }
@@ -72,7 +72,7 @@ export default function Sections() {
     }
 
     try {
-      let imageUrl = form.image_url.trim()
+      let imageUrl = editing?.image_url || null
       if (imageFile) imageUrl = await uploadImageFile(imageFile, 'sections')
       const payload = { name: form.name.trim(), type_id: form.type_id, image_url: imageUrl || null }
       const request = editing
@@ -189,14 +189,6 @@ export default function Sections() {
               <option value="">{t('sections.noProductType')}</option>
               {productTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
             </select>
-          </FormField>
-          <FormField label={t('common.imageUrl')}>
-            <input
-              className="field"
-              value={form.image_url}
-              onChange={(event) => setForm((current) => ({ ...current, image_url: event.target.value }))}
-              placeholder="https://..."
-            />
           </FormField>
           <FormField label={t('common.imageUpload')}>
             <input className="field" type="file" accept="image/*" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />

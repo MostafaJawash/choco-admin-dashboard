@@ -4,6 +4,9 @@ alter table if exists public.categories
 alter table if exists public.product_types
   add column if not exists image_url text;
 
+alter table if exists public.product_types
+  add column if not exists category_id uuid references public.categories(id) on delete set null;
+
 alter table if exists public.sections
   add column if not exists image_url text;
 

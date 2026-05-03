@@ -7,11 +7,12 @@ import { useI18n } from '../i18n/useI18n'
 import { resolveImageUrl, uploadImageFile } from '../lib/imageUpload'
 import { supabase } from '../lib/supabaseClient'
 
-const initialForm = { name: '', image_url: '' }
+const initialForm = { name: '' }
 
 export default function ProductTypes() {
   const { t } = useI18n()
   const [productTypes, setProductTypes] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -23,13 +24,21 @@ export default function ProductTypes() {
 
   const loadProductTypes = async () => {
     setError('')
-    const { data, error: loadError } = await supabase
-      .from('product_types')
-      .select('id, name, image_url')
-      .order('name', { ascending: true })
+    const [productTypeResult, categoryResult] = await Promise.all([
+      supabase
+        .from('product_types')
+        .select('id, name, image_url, category_id, categories(name)')
+        .order('name', { ascending: true }),
+      supabase
+        .from('categories')
+        .select('id, name')
+        .order('name', { ascending: true }),
+    ])
 
-    if (loadError) setError(loadError.message)
-    setProductTypes(data || [])
+    if (productTypeResult.error) setError(productTypeResult.error.message)
+    if (categoryResult.error) setError(categoryResult.error.message)
+    setProductTypes(productTypeResult.data || [])
+    setCategories(categoryResult.data || [])
     setLoading(false)
   }
 
@@ -39,14 +48,14 @@ export default function ProductTypes() {
 
   const openCreate = () => {
     setEditing(null)
-    setForm(initialForm)
+    setForm({ name: '', category_id: categories[0]?.id || '' })
     setImageFile(null)
     setModalOpen(true)
   }
 
   const openEdit = (productType) => {
     setEditing(productType)
-    setForm({ name: productType.name || '', image_url: productType.image_url || '' })
+    setForm({ name: productType.name || '', category_id: productType.category_id || '' })
     setImageFile(null)
     setModalOpen(true)
   }
@@ -57,9 +66,13 @@ export default function ProductTypes() {
     setError('')
 
     try {
-      let imageUrl = form.image_url.trim()
+      if (!form.category_id) {
+        throw new Error(t('productTypes.categoryRequired'))
+      }
+
+      let imageUrl = editing?.image_url || null
       if (imageFile) imageUrl = await uploadImageFile(imageFile, 'product-types')
-      const payload = { name: form.name.trim(), image_url: imageUrl || null }
+      const payload = { name: form.name.trim(), category_id: form.category_id, image_url: imageUrl || null }
       const request = editing
         ? supabase.from('product_types').update(payload).eq('id', editing.id)
         : supabase.from('product_types').insert(payload)
@@ -134,7 +147,10 @@ export default function ProductTypes() {
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-900">
                     <ImagePlus size={18} />
                   </div>
-                  <h2 className="min-w-0 break-words text-base font-bold text-stone-950">{productType.name}</h2>
+                  <div className="min-w-0">
+                    <h2 className="break-words text-base font-bold text-stone-950">{productType.name}</h2>
+                    <p className="mt-1 text-sm text-stone-500">{productType.categories?.name || t('common.unassigned')}</p>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button type="button" className="btn-secondary min-h-11 px-3" onClick={() => openEdit(productType)}>
@@ -161,13 +177,20 @@ export default function ProductTypes() {
               placeholder={t('productTypes.placeholder')}
             />
           </FormField>
-          <FormField label={t('common.imageUrl')}>
-            <input
-              className="field"
-              value={form.image_url}
-              onChange={(event) => setForm((current) => ({ ...current, image_url: event.target.value }))}
-              placeholder="https://..."
-            />
+          <FormField label={t('productTypes.category')}>
+            <select
+              className="field min-h-11"
+              value={form.category_id || ''}
+              onChange={(event) => setForm((current) => ({ ...current, category_id: event.target.value }))}
+              required
+            >
+              <option value="">{t('productTypes.chooseCategory')}</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </FormField>
           <FormField label={t('common.imageUpload')}>
             <input className="field" type="file" accept="image/*" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
