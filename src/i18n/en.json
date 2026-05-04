@@ -122,6 +122,8 @@
     "add": "Add Section",
     "edit": "Edit Section",
     "name": "Section name",
+    "category": "Category",
+    "noCategory": "Choose category",
     "productType": "Product Type",
     "noProductType": "Choose product type",
     "typeRequired": "Choose a product type before saving the section.",

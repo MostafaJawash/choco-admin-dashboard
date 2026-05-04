@@ -7,12 +7,13 @@ import { useI18n } from '../i18n/useI18n'
 import { resolveImageUrl, uploadImageFile } from '../lib/imageUpload'
 import { supabase } from '../lib/supabaseClient'
 
-const initialForm = { name: '', type_id: '', image_url: '' }
+const initialForm = { name: '', category_id: '', type_id: '', image_url: '' }
 
 export default function Sections() {
   const { t } = useI18n()
   const [sections, setSections] = useState([])
   const [productTypes, setProductTypes] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -24,21 +25,27 @@ export default function Sections() {
 
   const loadSections = useCallback(async () => {
     setError('')
-    const [sectionResult, productTypeResult] = await Promise.all([
+    const [sectionResult, productTypeResult, categoryResult] = await Promise.all([
       supabase
         .from('sections')
         .select('id, name, type_id, image_url, product_types(name)')
         .order('name', { ascending: true }),
       supabase
         .from('product_types')
+        .select('id, name, category_id')
+        .order('name', { ascending: true }),
+      supabase
+        .from('categories')
         .select('id, name')
         .order('name', { ascending: true }),
     ])
-
     if (sectionResult.error) setError(sectionResult.error.message)
     if (productTypeResult.error) setError(productTypeResult.error.message || t('sections.typeLoadError'))
+    if (categoryResult.error) setError(categoryResult.error.message)
+
     setSections(sectionResult.data || [])
     setProductTypes(productTypeResult.data || [])
+    setCategories(categoryResult.data || [])
     setLoading(false)
   }, [t])
 
@@ -48,14 +55,18 @@ export default function Sections() {
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ ...initialForm, type_id: productTypes[0]?.id || '' })
+    const firstCategory = categories[0]?.id || ''
+    const firstTypeForCat = productTypes.find((pt) => String(pt.category_id) === String(firstCategory))?.id || ''
+    setForm({ ...initialForm, category_id: firstCategory, type_id: firstTypeForCat })
     setImageFile(null)
     setModalOpen(true)
   }
 
   const openEdit = (section) => {
     setEditing(section)
-    setForm({ name: section.name || '', type_id: section.type_id || '' })
+    const typeObj = productTypes.find((pt) => pt.id === section.type_id)
+    const categoryId = typeObj?.category_id || ''
+    setForm({ name: section.name || '', category_id: categoryId, type_id: section.type_id || '' })
     setImageFile(null)
     setModalOpen(true)
   }
@@ -179,6 +190,22 @@ export default function Sections() {
               placeholder={t('sections.placeholder')}
             />
           </FormField>
+          <FormField label={t('sections.category')}>
+            <select
+              className="field min-h-11"
+              value={form.category_id}
+              onChange={(event) => {
+                const newCat = event.target.value
+                const firstType = productTypes.find((pt) => String(pt.category_id) === String(newCat))?.id || ''
+                setForm((current) => ({ ...current, category_id: newCat, type_id: firstType }))
+              }}
+              required
+            >
+              <option value="">{t('sections.noCategory')}</option>
+              {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
+          </FormField>
+
           <FormField label={t('sections.productType')}>
             <select
               className="field min-h-11"
@@ -187,7 +214,11 @@ export default function Sections() {
               required
             >
               <option value="">{t('sections.noProductType')}</option>
-              {productTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
+              {productTypes
+                .filter((type) => !form.category_id || String(type.category_id) === String(form.category_id))
+                .map((type) => (
+                  <option key={type.id} value={type.id}>{type.name}</option>
+                ))}
             </select>
           </FormField>
           <FormField label={t('common.imageUpload')}>
