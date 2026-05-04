@@ -185,7 +185,7 @@ export default function Sections() {
             <input
               className="field"
               value={form.name}
-              onChange={(event) => setForm({ name: event.target.value })}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
               required
               placeholder={t('sections.placeholder')}
             />
