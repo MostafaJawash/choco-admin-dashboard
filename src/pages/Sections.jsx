@@ -85,7 +85,7 @@ export default function Sections() {
     try {
       let imageUrl = editing?.image_url || null
       if (imageFile) imageUrl = await uploadImageFile(imageFile, 'sections')
-      const payload = { name: form.name.trim(), type_id: form.type_id, image_url: imageUrl || null }
+      const payload = { name: form.name.trim(), type_id: form.type_id, image_url: imageUrl || null, category_id: form.category_id }
       const request = editing
         ? supabase.from('sections').update(payload).eq('id', editing.id)
         : supabase.from('sections').insert(payload)
