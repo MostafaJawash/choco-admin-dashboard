@@ -28,7 +28,7 @@ export default function Sections() {
     const [sectionResult, productTypeResult, categoryResult] = await Promise.all([
       supabase
         .from('sections')
-        .select('id, name, type_id, image_url, product_types(name)')
+        .select('id, name, category_id, type_id, image_url, product_types(name)')
         .order('name', { ascending: true }),
       supabase
         .from('product_types')
@@ -65,7 +65,7 @@ export default function Sections() {
   const openEdit = (section) => {
     setEditing(section)
     const typeObj = productTypes.find((pt) => pt.id === section.type_id)
-    const categoryId = typeObj?.category_id || ''
+    const categoryId = section.category_id || typeObj?.category_id || ''
     setForm({ name: section.name || '', category_id: categoryId, type_id: section.type_id || '' })
     setImageFile(null)
     setModalOpen(true)
@@ -85,7 +85,12 @@ export default function Sections() {
     try {
       let imageUrl = editing?.image_url || null
       if (imageFile) imageUrl = await uploadImageFile(imageFile, 'sections')
-      const payload = { name: form.name.trim(), type_id: form.type_id, image_url: imageUrl || null, category_id: form.category_id }
+      const payload = {
+        name: form.name.trim(),
+        type_id: form.type_id,
+        image_url: imageUrl || null,
+        category_id: form.category_id,
+      }
       const request = editing
         ? supabase.from('sections').update(payload).eq('id', editing.id)
         : supabase.from('sections').insert(payload)
